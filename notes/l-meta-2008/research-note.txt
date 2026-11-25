@@ -1,0 +1,82 @@
+L-meta-2008 — projective-plane incidence circuits
+Research checkpoint, 25 November 2026
+
+The full desk problem remains open in this work. The strongest unconditional size result in this bundle applies to every normalized binary monotone circuit for every plane of order 101 through 365. It covers arbitrary reuse, depth, and wiring. No plane catalogue or circuit enumeration is used.
+
+The desk gives N = q²+q+1 points and as many lines. A circuit must return true on each incident point–line singleton pair. It must return false when the selected sets have no incidence and at most q lines are selected. The requested inequality is Nq ≤ 100s, where s is the number of gates. Monotonicity forces true on every input containing an incident pair, including inputs with more than q lines.
+
+1. Every layout through order 365
+
+TriangularBound.lean proves 11N ≤ 3s + 18q + 7 at every order q ≥ 2. Through365.lean proves both through_365 and residual_iff_365. The latter says the original posted theorem is equivalent to its restriction to orders above 365.
+
+Order       N         Proven bound        Desk requires
+  359       129241      471728              463976
+  365       133591      487642              487608
+
+The proven gate bounds are rounded up to integers. The first row concerns a plane known to exist because 359 is prime. The theorem at 365 is conditional on the plane axioms. At 366 this particular inequality no longer reaches the desk target. At the next prime order, 367, it gives 493,005 against the required 495,660.
+
+Gate elimination permits a designated input to be removed at a saving of two gates. The sufficient condition concerns the surviving negative tests. Each such test must be extendible to another negative on which adding the removed input produces a positive. The proof follows single-use OR gates to their first branch or AND. Monotonicity on the extended negative shows that the accumulated extra OR operands can be moved without changing the required answers. Port.lean through OrderedPeel.lean implement this step.
+
+Each line has a point outside any q other lines. Delete all line variables except two pencils with their common line omitted. The remaining 2q lines form a q by q grid. On its point variables delete the cells with i+j<q−2 in increasing order of i+j. For a surviving point, prefixes of rows and columns cover each earlier cell while avoiding the survivor. Allowing up to two other lines keeps every negative within the promise. The two phases save two gates per deletion. A shared OR of the remaining line bits restores the two-point negative tests needed by the residual graph bound. The final count uses the robust bound 4n ≤ 3s+1 for the residual n vertices. Grid.lean, Triangle.lean, GridDomain.lean, GridPeel.lean and TriangularBound.lean contain that argument.
+
+BlanketLimit.lean gives a constraint on refinements of this particular deletion order. If each point in a sequence has a cover of all its predecessors by at most d affine lines avoiding the point, the sequence has at most (d+1)(d+2)/2 members. This allows arbitrary directions over any field. Products of the d line equations are linearly independent because their evaluations form a triangular matrix with nonzero diagonal. In the two-pencil grid the row and column names can always be represented as ordinary integer coordinates in the rational plane. With d=q−2 our deleted triangle falls short of the upper limit by d+1 cells. This cap concerns that covering condition alone.
+
+2. Reporting every incidence row costs exactly Nq
+
+ExactRows.lean proves exact_separate_outputs. If all N points have their own output reporting which pencils meet the selected line set, every implementation needs at least Nq gates under the sparse promise, and independent OR trees attain it. The dual result holds for one output per line. Internal ANDs, ORs, reuse, and free constants are allowed.
+
+SparseRows.lean proves a version with partial positive sets. A gate can belong to a row only if it vanishes on the empty input and its singleton support contains at least two labels, all in that row. Different projective rows share at most one label and hence cannot own the same gate. If a row owns k gates, tracing them backwards leaves at most k+1 boundary functions. From each boundary function with an outside singleton, choose one such label. Monotonicity allows all those outside labels to be tested together. If too few gates were owned, this legal negative would dominate the boundary values of an uncovered accepted singleton. Summing the separate charges gives the result.
+
+The desk has one output. The missing step is controlling the cost of extracting these N answers from that output.
+
+3. Extracting row answers from a single circuit
+
+DeskExtraction.lean gives Nq ≤ 5s when the two operands of every AND have disjoint syntactic scopes on one chosen side. The other side and all fanout are unrestricted. A single reverse pass propagates an output weight to each input along paths where every AND sibling accepts with all the selector inputs off.
+
+DeskCuts.lean allows a fixed collection M of h physical gates to use the selected variable in both children. At each unmarked AND at least one child must be provable with every selector off. An OR chooses a child. At a marked AND both children may retain the selector. Repeated uses of a physical gate count once. The mask here is a device of the proof, distinct from the marks in the original desk submission.
+
+If all incident singletons admit such proofs on the chosen side, then
+
+    Nq ≤ (8h+5)s + (2h²+3h+1)N.
+
+For arbitrary circuits, the number of incident pairs accepted by the masked evaluation is at most the same right-hand side plus N. These statements hold for each mask and either choice of side. For h≤7 the target follows at every order. This includes circuits with other syntactic overlaps whose use can be avoided on a suitable accepting proof for each incidence. MarkedModel.lean through DeskCuts.lean implement the common forward baseline, two reverse operand queries per marked gate, and a final output query.
+
+DeskBlocks.lean allows an arbitrary number of bottom blocks. Each block takes original inputs. Its one output may be reused freely in an upper circuit. On one chosen side each upper AND combines disjoint input scopes. Every bottom block can independently have up to four overlapping AND gates or use at most 96 distinct selector inputs. Then Nq ≤ 100s at every desk order, with no global limit on the number of overlaps. The size is the sum of the bottom block sizes plus the upper size. The theorem uses a representation in which every bottom output reaches the upper output. A shared subcomputation crossing several bottom blocks must be accounted for under that representation. BlockTools.lean through DeskBlocks.lean give the compiler and cost proof.
+
+4. Constraints on arbitrary layouts
+
+DeskMerges.lean proves that each point row needs at least q distinct OR gates for every choice of a legal disjoint line set used as a negative test for that point. At each of these gates both children are false on the negative, and each child accepts an incident singleton that the other does not. Dually, for a fixed line the negative point set may include every point off the line. One OR may perform this work for multiple rows. The total number of gate–row memberships is at least Nq. For any threshold c, at least (Nq−cs)/N gates must each serve more than c rows whenever this quantity is positive.
+
+PrimeClauses.lean characterizes the smallest monotone CNF for the promise. For every line set S of size at most q, the following exact clause must occur in every valid monotone CNF.
+
+    (OR of point variables in the union of S) OR (OR of line variables outside S)
+
+The maximal negative for S turns on S and all points outside its union. Adding any missing point creates an incidence. Adding any missing line does too because q other lines cannot cover it. This makes the displayed clause unique. Conversely the conjunction of all the displayed clauses accepts exactly inputs containing an incidence or more than q selected lines. The minimum clause count is therefore the sum of binomial(N,i) for i from 0 through q. ChoiceCNF.lean shows that choosing one operand at each physical AND and retaining all ORs produces a family of clauses representing the circuit, including with arbitrary fanout. If a is the number of AND gates, 2^a must be at least that binomial sum. In particular a ≥ q log₂(q+1), since one can choose a line from each of q disjoint groups of q+1 lines. GateCounts.lean also proves at least 2q² OR gates at every q≥2, using a q-line pencil and a separate positive flip for each exposed input.
+
+5. Forcing a different gate for the same incident pair
+
+SourceFraction.lean and FreshSources.lean are the main entry points for the new progress on the unrestricted large-order case. Assume a counterexample of size s < Nq/100. At every q ≥ 200, more than 93% of all incident pairs have the following property.
+
+Fix one of those pairs (p,l). Compare a run with p alone, a run with l alone, and a run with the two together. Somewhere in the circuit an AND has one operand true with p alone, the other true with l alone, and the gate itself false on either endpoint alone. Call this a source for the pair. The same definition applies with any fixed, incidence-free background present in all three runs.
+
+For EVERY such source, there is a choice of at most q−1 additional points or at most q−1 additional lines that preserves this incidence as a test and permanently excludes this physical gate as its source. Adding either endpoint alone still gives a legal negative. Adding both still gives a positive. On the new background the old gate already fires with one endpoint alone. By monotonicity it stays ineligible on every larger background on which both endpoints remain available. A different AND must now serve the same pair. The background chosen can depend on the pair and on the gate.
+
+The counting proof retains both orientations of the operands of every AND. Evaluate one operand on point inputs and the other on line inputs. Say that a pair is protected by this product if the first operand stays false on every small set of points off l and the second stays false on every small set of lines avoiding p, while both corresponding singleton tests succeed. A product's protected incidences form a star. Indeed, two protected points force every accepted singleton line of the second operand to pass through both points, leaving at most one such line. The transpose gives the other orientation. The protected stars can therefore be grouped by their centres and tested with the shared row-output lower bound. There are at most 2s oriented products and two common forward circuits, each of cost s. For tests up to size t, where 1 ≤ t ≤ q, this proves
+
+    (t+1) × (number of protected pairs) ≤ (q+1)(6s+2N).
+
+The bound applies under every fixed independent background for which the relevant legal tests still fit. Choosing t=q−1 at the empty background gives the 93% result. If a source fails either protection test, the witness is on a single side and avoids the pencil of the same endpoint. It can be placed in the background while preserving the pair. GateActivation.lean checks what happens at the original gate number. ExtendBackground.lean and FreshSources.lean check persistence and the existence of a replacement. BackgroundFraction.lean proves that if at most q/10 points and lines combined have been fixed in an independent background, more than 82% of all original incidences remain available and unprotected in any undersized circuit at q ≥ 200. This statement is uniform over such backgrounds.
+
+A small experiment illustrates why the change of background matters. In the order-4 plane, a direct correct circuit has a protected source for all 105 incident pairs. Prepending a shared test for having at least one point and one line, then gating the inputs with it, preserves the function and leaves zero protected sources for those pairs on the empty background. Fixing one nonincident point–line pair restores protected genuine sources for all 60 surviving incidences. source_check.py also checks the physical gate exclusions and repeats the experiment at order 2.
+
+PersistentSources.lean gives a complementary sufficient condition. If, for every incident pair, one fixed gate can still serve as its source on every one-sided background of size at most q−1 that preserves the pair, then Nq ≤ 6s+2N. More generally, if k incidences have such a gate, qk ≤ (q+1)(6s+2N).
+
+The missing counting argument is across incidences. The same physical gate can help many pairs. In addition, each exclusion can require a different background. There is no lower bound here of Nq/100 on the number of distinct gates needed across all these experiments.
+
+6. Limits of predetermined test families
+
+FamilyCounting.lean and TemplateCover.lean verify two finite selection lemmas and the resulting simultaneous test guarantee under explicit cardinal inequalities. The field-coordinate realization and its asymptotic gate budget below are mathematical arguments implemented in the accompanying Python, outside the Lean formalization.
+
+Work over an affine plane of binary square order q=b². Partition nonvertical affine lines into B=16b buckets. With a balanced coloring, every supplied template has fewer than b/2 of its lines in each bucket. At a point, every nonzero nonincidence residual belongs to exactly one of the b+1 one-dimensional directions over the subfield. For a given template, bucket and point, fewer than half the directions are bad. A common list of m directions with 2^m greater than the number of template–bucket–point triples suffices. In a bucket AND the directional tests, OR together the buckets, and handle the vertical and infinite coordinates directly. Sorting by subfield cosets gives at most 4Bm q² + 5N gates. Every point answer is exact on every subset of every supplied template. The coloring uses the bound M B < 2^(3b/8) for M templates of size at most q and b divisible by 16. Indeed (1+1/B)^q ≤ 2^(b/8), which bounds the union of bad bucket events.
+
+At q=2^60 and M≤q^9, the symbolic upper bound gives 100s/(Nq) ≤ 0.00414252. This rules out proving the desk inequality using only such a fixed family and its subsets on these planes. The large-order count is symbolic. Inputs outside the specified templates remain available in the full desk problem. template-check.txt gives the finite experiments. At order 4 all 1,688 distinct line selections were evaluated at all points. At order 16 one subset of each of 913 templates was evaluated, in addition to checking the common certificate covering every subset.
