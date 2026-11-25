@@ -1,0 +1,5 @@
+q=4, 1,141 templates, 1,120 transformed quadratics, 8 buckets, 3 directions, 7 distinct mask constraints, 1 coloring trial(s).
+  255 gates; 1,688 line sets evaluated at all 21 points; certificate covers every subset of every template.
+q=16, 913 templates, 384 transformed quadratics, 64 buckets, 4 directions, 26 distinct mask constraints, 1 coloring trial(s).
+  20,872 gates; 913 line sets evaluated at all 273 points; certificate covers every subset of every template.
+Symbolic orbit bound: q=2^60, at most q^9 templates, 695 directions, 100s/(Nq) <= 0.00414252.

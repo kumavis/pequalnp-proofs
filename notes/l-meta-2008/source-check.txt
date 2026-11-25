@@ -1,0 +1,6 @@
+q=2, direct, empty: 21/21 surviving edges have a protected genuine source; 0 same-edge gate exclusions checked.
+q=2, guarded, empty: 0/21 surviving edges have a protected genuine source; 21 same-edge gate exclusions checked.
+q=2, guarded, one nonincident pair: 6/6 surviving edges have a protected genuine source; 0 same-edge gate exclusions checked.
+q=4, direct, empty: 105/105 surviving edges have a protected genuine source; 0 same-edge gate exclusions checked.
+q=4, guarded, empty: 0/105 surviving edges have a protected genuine source; 105 same-edge gate exclusions checked.
+q=4, guarded, one nonincident pair: 60/60 surviving edges have a protected genuine source; 0 same-edge gate exclusions checked.
